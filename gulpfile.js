@@ -9,6 +9,9 @@ var gulp = require('gulp'),
   concat = require('gulp-concat'),
   minifycss = require('gulp-minify-css'),
   uglify = require('gulp-uglify');
+  sourcemaps = require('gulp-sourcemaps');
+  gulp = require('gulp');
+  inject = require('gulp-inject');
 
 gulp.task('browser-sync', function() {
   browserSync({
@@ -20,11 +23,13 @@ gulp.task('browser-sync', function() {
 });
 
 gulp.task('styles', function(){
-  gulp.src(['src/styles/**/*.scss'])
+    gulp.src(['src/styles/**/*.scss'])
+    .pipe(sourcemaps.init())
     .pipe(sass())
     .on('error', gutil.log)
     .pipe(autoprefixer('last 2 versions'))
     .on('error', gutil.log)
+    .pipe(sourcemaps.write('../maps'))
     .pipe(gulp.dest('dist/styles/'))
     .pipe(rename({suffix: '.min'}))
     .pipe(minifycss())
@@ -54,8 +59,14 @@ gulp.task('bs-reload', function () {
   browserSync.reload();
 });
 
+gulp.task('inject', function () {
+  gulp.src('*.html')
+  .pipe(inject(gulp.src(['./dist/styles/style.css'], {read: false}), {relative: true}))
+  .pipe(gulp.dest('./'));
+});
+
 gulp.task('default', ['browser-sync'], function () {
   gulp.watch("src/styles/**/*.scss", ['styles']);
   gulp.watch("src/scripts/**/*.js", ['scripts']);
-  gulp.watch("*.html", ['bs-reload']);
+  gulp.watch("*.html", ['inject','bs-reload']);
 });
